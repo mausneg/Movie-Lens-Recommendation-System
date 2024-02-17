@@ -935,6 +935,7 @@ Sedangkan untuk data rating hanya diambil dari kolom `rating` saja. Data rating 
 ### Scalling Data
 
 Tabel 12. Sampel Data _User_ yang Telah di-_Scalling_
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1084,16 +1085,230 @@ Setelah melakukan _transformasi_, data _user_ dan data _item_ akan di _scalling_
 
 ### Data Splitting
 
- Selanjutnya, data _user_, data _item_, dan data rating akan di _split_ menjadi data _train_, data _test_, dan data _validation_. Hal ini bertujuan agar dapat dilakukan evaluasi model machine learning yang akan dibuat. Perbandingan data _train_, data _test_, dan data _validation_ yang digunakan adalah 80% data _train_, 10% data _test_, dan 10% data _validation_. 
+Selanjutnya, data _user_, data _item_, dan data rating akan di _split_ menjadi data _train_, data _test_, dan data _validation_. Hal ini bertujuan agar dapat dilakukan evaluasi model machine learning yang akan dibuat. Perbandingan data _train_, data _test_, dan data _validation_ yang digunakan adalah 80% data _train_, 10% data _test_, dan 10% data _validation_.
 
 ## Modeling
 
-Tahapan ini membahas mengenai model sisten rekomendasi yang Anda buat untuk menyelesaikan permasalahan. Sajikan top-N recommendation sebagai output.
+Pada tahap ini akan dilakukan pemodelan machine learning yaitu menggunakan _content-based filtering_ dengan menggunakan _cosine similarity_ dan menggunakan _neural network_. Perbedaan dari kedua model ini yaitu sebagai berikut.
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
+- _Content-based filtering_ dengan menggunakan _cosine similarity_ akan menghitung kemiripan antara _item_ dengan _item lainnya berdasarkan \_genre_ dan _tags_ yang dimiliki oleh _item_ tersebut. Sedangkan _neural network_ akan mempelajari pola dari data _user_ dan data _item_ dengan data _rating_ yang akan menjadi target.
+- _Content-based filtering_ dengan menggunakan _cosine similarity_ hanya dapat memberikan rekomendasi berdasarkan data _item_ yang sudah ada, sedangkan _neural network_ dapat memberikan rekomendasi berdasarkan data _user_ atau data _item_ yang belum ada, sehingga dengan menggunakan _neural network_ dapat memberikan rekomendasi terhadap _user_ yang baru.
 
-- Menyajikan dua solusi rekomendasi dengan algoritma yang berbeda.
-- Menjelaskan kelebihan dan kekurangan dari solusi/pendekatan yang dipilih.
+### Content-Based Filtering dengan Cosine Similarity
+
+Pada perhitungan _similarity_ antar film berdasarkan genres dan _tags_, akan digunakan _cosine similarity_. Hal ini dilakukan karena _cosine similarity_ dapat mengukur kesamaan antar film berdasarkan genres dan _tags_. Tetapi sebelum itu, akan dilakukan ekstraksi data _tags_ dengan menggunakan `CountVectorizer`. Dengan menggunakan `CountVectorizer`, akan dihitung frekuensi kemunculan setiap kata pada kolom _tags_. Berikut merupakan hasil dari _cosine similarity_.
+
+![alt text](https://github.com/mausneg/Movie-Lens-Recommendation-System/blob/main/images/image-2.png?raw=True)
+
+Gambar 2. _Heatmap_ _Cosine Similarity_ antar _Item_
+
+Dari Gambar 2 , terlihat bahwa banyak daerah yang memiliki warna yang cendrung terang yang menunjukkan bahwa terdapat banyak kesamaan antar film berdasarkan tags dan genres. Hal ini menunjukkan bahwa _cosine similarity_ dapat digunakan untuk mengukur kesamaan antar film berdasarkan tags dan genres.
+
+Langkah selanjutnya yaitu membuat _function_ untuk mendapatkan rekomendasi film berdasarkan film yang dipilih oleh _user_. Berikut merupakan _function_ yang digunakan.
+
+```python
+def get_recommendation_movie(title):
+    index = df_movies_similarity[df_movies_similarity['title'] == title].index[0]
+    similarity_score = cosine_sim[index]
+    similarity_place = sorted(enumerate(similarity_score),key=lambda x: x[1],reverse=True)[1:11]
+    similarity_list = []
+    for i in similarity_place:
+        similarity_list.append([df_movies_similarity.iloc[i[0], 1]] + [i[1]])
+    return similarity_list
+```
+
+Dari _function_ di atas, _user_ dapat memasukkan judul film yang ingin dicari rekomendasinya. Kemudian, _function_ tersebut akan mengembalikan 10 film yang memiliki kesamaan berdasarkan tags dan genres dengan film yang dipilih oleh _user_.
+
+Contoh penggunaan _function_ tersebut yaitu semisal _user_ memasukkan judul film "Toy Story (1995)" maka _function_ tersebut akan mengembalikan 10 film yang memiliki kesamaan berdasarkan tags dan genres dengan film "Toy Story (1995)". Berikut merupakan hasilnya.
+
+Tabel 13. Top 10 _Movies_ dengan "Toy Story (1995)" berdasarkan _Cosine Similarity_
+| Movie Title | Similarity Score |
+| --- | --- |
+| Bug's Life, A (1998) | 0.848528137423857 |
+| Toy Story 2 (1999) | 0.74535599249993 |
+| Antz (1998) | 0.7071067811865475 |
+| Adventures of Rocky and Bullwinkle, The (2000) | 0.7071067811865475 |
+| Emperor's New Groove, The (2000) | 0.7071067811865475 |
+| Monsters, Inc. (2001) | 0.7071067811865475 |
+| Wild, The (2006) | 0.7071067811865475 |
+| Shrek the Third (2007) | 0.7071067811865475 |
+| Tale of Despereaux, The (2008) | 0.7071067811865475 |
+| Asterix and the Vikings (Astérix et les Vikings) (2006) | 0.7071067811865475 |
+
+### Neural Network
+
+Pada tahap ini akan dilakukan pemodelan _machine learning_ dengan menggunakan _neural network_. Model ini akan mempelajari pola dari data _user_ dan data _item_ dengan data _rating_ yang akan menjadi target. Secara garis besar terdapat dua model _sequential_ yang akan digunakan. Model _sequential_ pertama yaitu model untuk data _user_ dan model _sequential_ kedua yaitu model untuk data _item_. Nantinya _output_ dari kedua model tersebut akan digabungkan dengan menggunakan _dot product_.
+
+![alt text](https://predictivehacks.com/wp-content/uploads/2022/10/content_based.png)
+Gambar 3. Ilustrasi Arsitektur _Neural Network_ untuk _Content-Based Filtering_
+
+Pada proses pelatihan model _neural network_ akan dilakukan _hyperparameter tuning_ dengan _Graduate Student Descent_ (GSD). Hal ini karena GSD merupakan metode yang paling umum digunakan untuk melakukan _hyperparameter tuning_ pada _deep learning_. Berikut merupakan _hyperparameter_ yang akan di _tuning_:
+
+- _Optimizer_: _Optimizer_ mengontrol bagaimana model diperbarui berdasarkan data yang dilihat dan fungsi _loss_-nya. Pada kasus ini, akan dicoba menggunakan _optimizer_ _adam_ dan _adagrad_ dengan _learning rate_ 0.001 (_default_), 0.0001, dan 0.01.
+- Jumlah _Neuron_ pada _Hidden Layer_: Jumlah _neuron_ dalam _hidden layer_ dapat mempengaruhi kapasitas model untuk mempelajari pola dalam data. Terlalu sedikit _neuron_ dapat menyebabkan _underfitting_, sementara terlalu banyak _neuron_ dapat menyebabkan _overfitting_. Pada kasus ini, akan dicoba menggunakan 32, 64, 128, 256, 512, dan 1024.
+- Jumlah _Hidden Layer_: Jumlah _hidden layer_ dalam model _deep learning_ juga dapat mempengaruhi kapasitas model. Model dengan lebih banyak layer dapat mempelajari pola yang lebih kompleks, tetapi juga lebih berisiko _overfitting_ dan membutuhkan lebih banyak data untuk pelatihan. Pada kasus ini, akan dicoba menggunakan 2 sampai 4 _hidden layer_.
+- _Epoch_: _Epoch_ adalah jumlah kali seluruh dataset melalui _neural network_ selama pelatihan. Pada kasus ini, akan dicoba menggunakan 50 dan 100 _epoch_.
+- _Batch Size_: _Batch size_ adalah jumlah sampel yang diproses sebelum model diperbarui. _Batch size_ yang lebih kecil dapat menghasilkan pembaruan yang lebih sering, tetapi juga dapat menyebabkan _noise_ dalam pembaruan tersebut. Pada kasus ini, akan dicoba menggunakan _batch size_ 64, 128, dan 256.
+
+Dari proses _tuning_ maka didapatkan model yang terbaik terdiri dari 512 _neuron_, _layer_ kedua terdiri dari 256 _neuron_, dan _layer_ terakhir terdiri dari 64 _neuron_. Model ini menggunakan fungsi _activation_ _relu_ pada _layer_ pertama dan kedua, karena _relu_ merupakan fungsi _activation_ yang paling umum digunakan pada _hidden layer_. Pada model ini juga ditambahkan _dropout_ dengan _rate_ 0.2 pada _layer_ pertama dan kedua untuk mencegah _overfitting_. Sedangkan pada _layer_ terakhir menggunakan fungsi _activation_ _linear_ karena _linear_ merupakan fungsi _activation_ yang paling umum digunakan pada _output layer_ untuk _regression_.
+
+Pada masing-masing model akan ditambahkan _layer input_ dengan _input shape_ yang sesuai dengan jumlah _feature_ pada data _user_ dan data _item_. Kemudian, _layer_ tersebut akan dihubungkan dengan _layer_ _dense_ dengan jumlah _neuron_ yang sudah ditentukan sebelumnya. Sebelum dilakukan _dot product_, _output_ dari masing-masing model akan di normalisasi terlebih dahulu, hal ini bertujuan agar _output_ dari masing-masing model memiliki rentang nilai yang sama. Setelah itu, _output_ dari masing-masing model akan di _dot product_ untuk mendapatkan _output_ akhir. Model akan di _compile_ dengan _optimizer_ _adagrad_ dengan _learning rate_ sebesar 0.01, _mean squared error_, dan _metrics MSE.
+
+Setelah itu, model akan di _fit_ dengan data _train_ dan data _test_ yang sudah di _split_ sebelumnya. Model akan di _fit_ dengan _epoch_ sebanyak 100 kali dan _batch size_ sebesar 256. Lalu model akan melakukan _prediction_ dengan menggunakan data _user_ yang baru, berikut merupakan data _user_ yang baru tersebut.
+
+Tabel 14. Data _User_ yang Baru
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>Adventure</th>
+      <th>Animation</th>
+      <th>Children</th>
+      <th>Comedy</th>
+      <th>Fantasy</th>
+      <th>Romance</th>
+      <th>Action</th>
+      <th>Crime</th>
+      <th>Thriller</th>
+      <th>Mystery</th>
+      <th>Horror</th>
+      <th>Drama</th>
+      <th>War</th>
+      <th>Western</th>
+      <th>Sci-Fi</th>
+      <th>Musical</th>
+      <th>Film-Noir</th>
+      <th>IMAX</th>
+      <th>Documentary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1000</td>
+      <td>4</td>
+      <td>5</td>
+      <td>4</td>
+      <td>3</td>
+      <td>4</td>
+      <td>1</td>
+      <td>3</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+Pada Tabel 14 terlihat user 1000 memiliki preferensi terhadap film dengan genres _Adventure_, _Animation_, _Childern_, _Comedy_, _Fantasy_, dan _Action_. Akan tetapi sebelum melakukan _prediction_ data _user_ tersebut akan di _scalling_ terlebih dahulu agar memiliki rentang nilai yang sama dengan data _user_ yang sudah di _scalling_ sebelumnya. Setelah itu, model akan melakukan _prediction_ dengan menggunakan data _user_ yang baru tersebut. Berikut merupakan hasil _prediction_ dari model tersebut.
+
+Tabel 15. Top 10 _Movies_ yang Direkomendasikan untuk _User_ 1000
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>predictions</th>
+      <th>movieId</th>
+      <th>title</th>
+      <th>genres</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1000</td>
+      <td>3.799577</td>
+      <td>130520</td>
+      <td>Home (2015)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fanta...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1000</td>
+      <td>3.799577</td>
+      <td>673</td>
+      <td>Space Jam (1996)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fanta...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1000</td>
+      <td>3.772406</td>
+      <td>108932</td>
+      <td>The Lego Movie (2014)</td>
+      <td>[Action, Adventure, Animation, Children, Comed...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1000</td>
+      <td>3.772406</td>
+      <td>51939</td>
+      <td>TMNT (Teenage Mutant Ninja Turtles) (2007)</td>
+      <td>[Action, Adventure, Animation, Children, Comed...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1000</td>
+      <td>3.772406</td>
+      <td>26340</td>
+      <td>Twelve Tasks of Asterix, The (Les douze travau...</td>
+      <td>[Action, Adventure, Animation, Children, Comed...</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1000</td>
+      <td>3.761944</td>
+      <td>36397</td>
+      <td>Valiant (2005)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fanta...</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1000</td>
+      <td>3.735873</td>
+      <td>2294</td>
+      <td>Antz (1998)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fantasy]</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1000</td>
+      <td>3.735873</td>
+      <td>3114</td>
+      <td>Toy Story 2 (1999)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fantasy]</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>1000</td>
+      <td>3.735873</td>
+      <td>1</td>
+      <td>Toy Story (1995)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fantasy]</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>1000</td>
+      <td>3.735873</td>
+      <td>53121</td>
+      <td>Shrek the Third (2007)</td>
+      <td>[Adventure, Animation, Children, Comedy, Fantasy]</td>
+    </tr>
+  </tbody>
+</table>
+
+Dari Tabel 15 terlihat bahwa model merekomendasikan 10 film yang memiliki kesamaan dengan preferensi _user_ 1000. Hal ini menunjukkan bahwa model dapat memberikan rekomendasi film berdasarkan preferensi _user_ yang baru.
 
 ## Evaluation
 
