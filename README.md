@@ -1,4 +1,4 @@
-# Laporan Proyek Machine Learning - Nama Anda
+# Laporan Proyek Machine Learning - Maulana Surya Negara
 
 ## Project Overview
 
@@ -28,7 +28,7 @@ Dari alasan-alasan di atas, maka didapatkan _problem statement_ dan _goals_ dari
 
 ### Goals
 
-- Membangun sistem rekomendasi film yang dapat memberikan rekomendasi yang relevan dan personal bagi setiap pengguna.
+- Membangun sistem rekomendasi film yang dapat memberikan rekomendasi yang relevan dan personal bagi setiap pengguna dengan _error_ di bawah 0.2.
 - Mengidentifikasi dan mengumpulkan dataset yang diperlukan untuk membangun sistem rekomendasi film yang efektif.
 - Mengevaluasi kinerja dari sistem rekomendasi film yang telah dibangun.
 
@@ -1152,11 +1152,12 @@ Pada proses pelatihan model _neural network_ akan dilakukan _hyperparameter tuni
 
 Dari proses _tuning_ maka didapatkan model yang terbaik terdiri dari 512 _neuron_, _layer_ kedua terdiri dari 256 _neuron_, dan _layer_ terakhir terdiri dari 64 _neuron_. Model ini menggunakan fungsi _activation_ _relu_ pada _layer_ pertama dan kedua, karena _relu_ merupakan fungsi _activation_ yang paling umum digunakan pada _hidden layer_. Pada model ini juga ditambahkan _dropout_ dengan _rate_ 0.2 pada _layer_ pertama dan kedua untuk mencegah _overfitting_. Sedangkan pada _layer_ terakhir menggunakan fungsi _activation_ _linear_ karena _linear_ merupakan fungsi _activation_ yang paling umum digunakan pada _output layer_ untuk _regression_.
 
-Pada masing-masing model akan ditambahkan _layer input_ dengan _input shape_ yang sesuai dengan jumlah _feature_ pada data _user_ dan data _item_. Kemudian, _layer_ tersebut akan dihubungkan dengan _layer_ _dense_ dengan jumlah _neuron_ yang sudah ditentukan sebelumnya. Sebelum dilakukan _dot product_, _output_ dari masing-masing model akan di normalisasi terlebih dahulu, hal ini bertujuan agar _output_ dari masing-masing model memiliki rentang nilai yang sama. Setelah itu, _output_ dari masing-masing model akan di _dot product_ untuk mendapatkan _output_ akhir. Model akan di _compile_ dengan _optimizer_ _adagrad_ dengan _learning rate_ sebesar 0.01, _mean squared error_, dan _metrics MSE.
+Pada masing-masing model akan ditambahkan _layer input_ dengan _input shape_ yang sesuai dengan jumlah _feature_ pada data _user_ dan data _item_. Kemudian, _layer_ tersebut akan dihubungkan dengan _layer_ _dense_ dengan jumlah _neuron_ yang sudah ditentukan sebelumnya. Sebelum dilakukan _dot product_, _output_ dari masing-masing model akan di normalisasi terlebih dahulu, hal ini bertujuan agar _output_ dari masing-masing model memiliki rentang nilai yang sama. Setelah itu, _output_ dari masing-masing model akan di _dot product_ untuk mendapatkan _output_ akhir. Model akan di _compile_ dengan _optimizer_ _adagrad_ dengan _learning rate_ sebesar 0.01, _mean squared error_, dan \_metrics MSE.
 
 Setelah itu, model akan di _fit_ dengan data _train_ dan data _test_ yang sudah di _split_ sebelumnya. Model akan di _fit_ dengan _epoch_ sebanyak 100 kali dan _batch size_ sebesar 256. Lalu model akan melakukan _prediction_ dengan menggunakan data _user_ yang baru, berikut merupakan data _user_ yang baru tersebut.
 
 Tabel 14. Data _User_ yang Baru
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1213,6 +1214,7 @@ Tabel 14. Data _User_ yang Baru
 Pada Tabel 14 terlihat user 1000 memiliki preferensi terhadap film dengan genres _Adventure_, _Animation_, _Childern_, _Comedy_, _Fantasy_, dan _Action_. Akan tetapi sebelum melakukan _prediction_ data _user_ tersebut akan di _scalling_ terlebih dahulu agar memiliki rentang nilai yang sama dengan data _user_ yang sudah di _scalling_ sebelumnya. Setelah itu, model akan melakukan _prediction_ dengan menggunakan data _user_ yang baru tersebut. Berikut merupakan hasil _prediction_ dari model tersebut.
 
 Tabel 15. Top 10 _Movies_ yang Direkomendasikan untuk _User_ 1000
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1312,13 +1314,16 @@ Dari Tabel 15 terlihat bahwa model merekomendasikan 10 film yang memiliki kesama
 
 ## Evaluation
 
-Pada bagian ini Anda perlu menyebutkan metrik evaluasi yang digunakan. Kemudian, jelaskan hasil proyek berdasarkan metrik evaluasi tersebut.
+Pada tahap ini, model akan dievaluasi dengan menggunakan data _testing_ dan data _validation_. Evaluasi dilakukan dengan menggunakan metrik _MSE_ (_Mean Squared Error_). _MSE_ digunakan karena _MSE_ dapat mengukur seberapa baik model dalam memprediksi data _rating_ yang diberikan oleh _user_. Berikut merupakan hasil evaluasi dari model _neural network_.
 
-Ingatlah, metrik evaluasi yang digunakan harus sesuai dengan konteks data, problem statement, dan solusi yang diinginkan.
+![alt text](https://github.com/mausneg/Movie-Lens-Recommendation-System/blob/main/images/image-3.png?raw=True)
+Gambar 4. _MSE_ dari Model _Neural Network_
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
-
-- Menjelaskan formula metrik dan bagaimana metrik tersebut bekerja.
+Dari Gambar 4, dapat diamati bahwa:
+- Model memiliki MSE sebesar kurang dari 0.16 pada data _train_, data _test_, dan data _validation_.
+- Model memiliki MSE yang konsisten pada data _training_, data _testing_, dan data _validation_ sehingga model dapat dikatakan _goodfit_. Hal ini menunjukkan bahwa model tidak _overfitting_ atau _underfitting_. _Overfitting_ sendiri terjadi ketika model memiliki perbedaan MSE yang besar antara data _training_ dan data _testing_ atau antara data _testing_ dan data _validation_. Sedangkan _underfitting_ terjadi ketika model memiliki MSE yang tinggi pada data _training_, data _testing_, dan data _validation_.
+- Model memiliki performa yang sangat baik dalam memberikan rekomendasi dengan _error_ di bawah 0.2.
+- Dari hasil evaluasi tersebut, dapat disimpulkan bahwa model _neural network_ dapat memberikan rekomendasi film dengan baik.
 
 ## References
 
