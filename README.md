@@ -81,7 +81,7 @@ Dari Tabel 1 didapatkan informasi sebagai berikut.
 - Terdapat 1 kolom bertipe `int64` yaitu `movieId`.
 - Terdapat 2 kolom bertipe `object` yaitu `title` dan `genres`.
 
-Tabel 2. Deskripsi Data _Rating_
+Tabel 2. Deskripsi Data Rating
 | Nama Kolom | Non-Null Count | Dtype |
 |------------|----------------|-------|
 | userId | 100836 non-null| int64 |
@@ -109,7 +109,7 @@ Dari Tabel 3 didapatkan informasi sebagai berikut.
 - Terdapat 2 kolom bertipe `int64` yaitu `userId`, `movieId`, dan `timestamp`.
 - Terdapat 1 kolom bertipe `object` yaitu `tag`.
 
-Tabel 4 Statistik Deskriptif Data _Rating_
+Tabel 4 Statistik Deskriptif Data Rating
 || userId | movieId | rating | timestamp |
 |-------|--------|---------|--------|-----------|
 | count | 100836 | 100836 | 100836 | 100836 |
@@ -137,7 +137,7 @@ Untuk memastikan distribusi data dari kolom ratings, akan dilakukan visualisasi 
 
 ![alt text](https://github.com/mausneg/Movie-Lens-Recommendation-System/blob/main/images/image.png?raw=True)
 
-Gambar 1. Distribusi Data _Rating_
+Gambar 1. Distribusi Data Rating
 
 Dari histogram di atas, grafik terlihat _left-skewed_ yang menunjukkan bahwa mayoritas film memiliki rating di antara 3.0 - 4.0. Dengan kata lain, ada lebih sedikit film dengan rating rendah dibandingkan dengan film dengan rating tinggi.
 
@@ -151,13 +151,13 @@ Tahapan ini membahas mengenai proses data preparation yang dilakukan. Data prepa
 
 Langkah selanjutnya adalah menggabungkan dataset sesuai dengan kebutuhan. Data ratings akan digabungkan dengan data _movies_ dan data _movies_ juga akan digabungkan dengan data tags.
 
-#### Data _Movies_ dan Data Tags
+#### Data Movies dan Data Tags
 
 Penggabungan kedua dataset ini memungkinkan kita untuk mempertimbangkan lebih banyak fitur saat menghitung kesamaan antara film. Dalam hal ini, algoritma _cosine similarity_ digunakan untuk menghitung kesamaan antara film berdasarkan genre dan tag.
 
 Langkah pertama adalah menggabungkan kedua dataset ini berdasarkan kolom `movieId`. Setelah itu, kolom `tag` akan digabungkan menjadi satu dengan menggunakan fungsi `groupby` dan `agg` untuk menggabungkan tag menjadi satu baris. Berikut merupakan hasilnya.
 
-Tabel 5. Hasil _Join_ Tag berdasarkan `movieId`
+Tabel 5. Sampel Hasil _Join_ Tag berdasarkan `movieId`
 
 <table border="1" class="dataframe">
   <thead>
@@ -198,7 +198,8 @@ Tabel 5. Hasil _Join_ Tag berdasarkan `movieId`
 
 Selanjutnya akan dilakukan _merge_ antara data movies dan data tags. Setelah itu akan dilakukan _merge_ antara kolom `tag` dengan kolom `genres` untuk menggabungkan kolom tersebut menjadi satu. Berikut merupakan hasilnya.
 
-Tabel 6. Hasil _Merge_ Data Movies dan Data Tags
+Tabel 6. Sampel Hasil _Merge_ Data Movies dan Data Tags
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -244,13 +245,14 @@ Tabel 6. Hasil _Merge_ Data Movies dan Data Tags
 
 Pada Tabel 6 dapat dilihat kolom `tags` sudah digabungkan berdasarkan `movieId` meskipun terdapat beberapa _missing value_ pada kolom `tags`. _Missing value_ pada kolom `tags` ini akan diisi dengan _whitespace_.
 
-Dengan demikian, data untuk melakukan _cosine similarity_ sudah siap untuk digunakan. 
+Dengan demikian, data untuk melakukan _cosine similarity_ sudah siap untuk digunakan.
 
 #### Data Movies dan Data Ratings
 
 Pada tahap ini, akan dilakukan penggabungan data ratings dengan data movies. Hal ini dilakukan agar nantinya dapat digunakan untuk memberikan rekomendasi film berdasarkan rating yang diberikan oleh user pada movie dengan mempertimbangkan genres.
 
-Tabel 7. Hasil _Merge_ Data Movies dan Data Ratings
+Tabel 7. Sampel Hasil _Merge_ Data Movies dan Data Ratings
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -309,7 +311,8 @@ Tabel 7. Hasil _Merge_ Data Movies dan Data Ratings
 Pada Tabel 7 data movies dan data ratings sudah digabungkan berdasarkan `movieId`. Langkah selanjutnya yaitu melakukan _encoding_ dengan menjabarkan kolom genres menjadi beberapa kolom berdasarkan nilai yang ada pada kolom genres yang berisi nilai 1 atau 0.
 Hal ini dilakukan karena model machine learning hanya dapat memproses data yang berupa numerik.
 
-Tabel 8. Hasil _Encoding_ Data Movies dan Data Ratings
+Tabel 8. Sampel Hasil _Encoding_ Data Movies dan Data Ratings
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -463,6 +466,625 @@ Tabel 8. Hasil _Encoding_ Data Movies dan Data Ratings
 
 Pada Tabel 8 dapat dilihat kolom `genres` sudah dijabarkan dengan masing-masing jenis _genre_ menjadi kolom tersendiri.
 
+### Data Transformation
+
+Setelah melakukan penggabungan data, langkah selanjutnya adalah melakukan _data transformation_ . Pada tahap ini, data yang berisi rating dan _movie_ akan di-_tranform_ menjadi data _user_, data _movie_, dan data rating. Sehingga data _user_ dan data _item_(_movie_) akan dijadikan sebagai _features_ dan data rating akan dijadikan sebagai _target_.
+
+#### Data User
+
+Tahap ini dimulai dengan membuang kolom-kolom yang tidak diperlukan untuk data _user_ seperti `movieId` dan `title`. Selanjutnya akan dibentuk data _preferences user_ berdasarkan nilai rata-rata dari rating yang diberikan oleh _user_ untuk setiap _genre_ dari film yang **pernah** ditonton oleh _user_. Berikut merupakan data _preferences user_ yang dihasilkan.
+
+Tabel 9. Sampel Data _Preferences User_
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>Adventure</th>
+      <th>Animation</th>
+      <th>Children</th>
+      <th>Comedy</th>
+      <th>Fantasy</th>
+      <th>Romance</th>
+      <th>Action</th>
+      <th>Crime</th>
+      <th>Thriller</th>
+      <th>Mystery</th>
+      <th>Horror</th>
+      <th>Drama</th>
+      <th>War</th>
+      <th>Western</th>
+      <th>Sci-Fi</th>
+      <th>Musical</th>
+      <th>Film-Noir</th>
+      <th>IMAX</th>
+      <th>Documentary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>4.388235</td>
+      <td>4.689655</td>
+      <td>4.547619</td>
+      <td>4.277108</td>
+      <td>4.297872</td>
+      <td>4.307692</td>
+      <td>4.322222</td>
+      <td>4.355556</td>
+      <td>4.145455</td>
+      <td>4.166667</td>
+      <td>3.470588</td>
+      <td>4.529412</td>
+      <td>4.500000</td>
+      <td>4.285714</td>
+      <td>4.225000</td>
+      <td>4.681818</td>
+      <td>5.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>4.166667</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>4.000000</td>
+      <td>0.000000</td>
+      <td>4.500000</td>
+      <td>3.954545</td>
+      <td>3.800000</td>
+      <td>3.700000</td>
+      <td>4.000000</td>
+      <td>3.000000</td>
+      <td>3.882353</td>
+      <td>4.500000</td>
+      <td>3.500000</td>
+      <td>3.875000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>3.750000</td>
+      <td>4.333333</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3</td>
+      <td>2.727273</td>
+      <td>0.500000</td>
+      <td>0.500000</td>
+      <td>1.000000</td>
+      <td>3.375000</td>
+      <td>0.500000</td>
+      <td>3.571429</td>
+      <td>0.500000</td>
+      <td>4.142857</td>
+      <td>5.000000</td>
+      <td>4.687500</td>
+      <td>0.750000</td>
+      <td>0.500000</td>
+      <td>0.000000</td>
+      <td>4.200000</td>
+      <td>0.500000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4</td>
+      <td>3.655172</td>
+      <td>4.000000</td>
+      <td>3.800000</td>
+      <td>3.509615</td>
+      <td>3.684211</td>
+      <td>3.379310</td>
+      <td>3.320000</td>
+      <td>3.814815</td>
+      <td>3.552632</td>
+      <td>3.478261</td>
+      <td>4.250000</td>
+      <td>3.483333</td>
+      <td>3.571429</td>
+      <td>3.800000</td>
+      <td>2.833333</td>
+      <td>4.000000</td>
+      <td>4.0</td>
+      <td>3.000000</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5</td>
+      <td>3.250000</td>
+      <td>4.333333</td>
+      <td>4.111111</td>
+      <td>3.466667</td>
+      <td>4.142857</td>
+      <td>3.090909</td>
+      <td>3.111111</td>
+      <td>3.833333</td>
+      <td>3.555556</td>
+      <td>4.000000</td>
+      <td>3.000000</td>
+      <td>3.800000</td>
+      <td>3.333333</td>
+      <td>3.000000</td>
+      <td>2.500000</td>
+      <td>4.400000</td>
+      <td>0.0</td>
+      <td>3.666667</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+Pada Tabel 9 dapat dilihat bahwa data _preferences user_ berisi seberapa suka _user_ terhadap setiap _genre_ film yang pernah ditonton oleh _user_.
+
+Langkah selanjutnya yaitu mengaplikasikan data _preferences user_ tersebut ke dalam data _user_ yang sudah di-_drop_ kolom-kolom yang tidak diperlukan. Berikut merupakan hasilnya.
+
+Tabel 10. Sampel Data _User_ yang Telah di-_Transform_
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>Adventure</th>
+      <th>Animation</th>
+      <th>Children</th>
+      <th>Comedy</th>
+      <th>Fantasy</th>
+      <th>Romance</th>
+      <th>Action</th>
+      <th>Crime</th>
+      <th>Thriller</th>
+      <th>Mystery</th>
+      <th>Horror</th>
+      <th>Drama</th>
+      <th>War</th>
+      <th>Western</th>
+      <th>Sci-Fi</th>
+      <th>Musical</th>
+      <th>Film-Noir</th>
+      <th>IMAX</th>
+      <th>Documentary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>4.388235</td>
+      <td>4.689655</td>
+      <td>4.547619</td>
+      <td>4.277108</td>
+      <td>4.297872</td>
+      <td>4.307692</td>
+      <td>4.322222</td>
+      <td>4.355556</td>
+      <td>4.145455</td>
+      <td>4.166667</td>
+      <td>3.470588</td>
+      <td>4.529412</td>
+      <td>4.500000</td>
+      <td>4.285714</td>
+      <td>4.225000</td>
+      <td>4.681818</td>
+      <td>5.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>4.166667</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>4.000000</td>
+      <td>0.000000</td>
+      <td>4.500000</td>
+      <td>3.954545</td>
+      <td>3.800000</td>
+      <td>3.700000</td>
+      <td>4.000000</td>
+      <td>3.000000</td>
+      <td>3.882353</td>
+      <td>4.500000</td>
+      <td>3.500000</td>
+      <td>3.875000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>3.750000</td>
+      <td>4.333333</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3</td>
+      <td>2.727273</td>
+      <td>0.500000</td>
+      <td>0.500000</td>
+      <td>1.000000</td>
+      <td>3.375000</td>
+      <td>0.500000</td>
+      <td>3.571429</td>
+      <td>0.500000</td>
+      <td>4.142857</td>
+      <td>5.000000</td>
+      <td>4.687500</td>
+      <td>0.750000</td>
+      <td>0.500000</td>
+      <td>0.000000</td>
+      <td>4.200000</td>
+      <td>0.500000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4</td>
+      <td>3.655172</td>
+      <td>4.000000</td>
+      <td>3.800000</td>
+      <td>3.509615</td>
+      <td>3.684211</td>
+      <td>3.379310</td>
+      <td>3.320000</td>
+      <td>3.814815</td>
+      <td>3.552632</td>
+      <td>3.478261</td>
+      <td>4.250000</td>
+      <td>3.483333</td>
+      <td>3.571429</td>
+      <td>3.800000</td>
+      <td>2.833333</td>
+      <td>4.000000</td>
+      <td>4.0</td>
+      <td>3.000000</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5</td>
+      <td>3.250000</td>
+      <td>4.333333</td>
+      <td>4.111111</td>
+      <td>3.466667</td>
+      <td>4.142857</td>
+      <td>3.090909</td>
+      <td>3.111111</td>
+      <td>3.833333</td>
+      <td>3.555556</td>
+      <td>4.000000</td>
+      <td>3.000000</td>
+      <td>3.800000</td>
+      <td>3.333333</td>
+      <td>3.000000</td>
+      <td>2.500000</td>
+      <td>4.400000</td>
+      <td>0.0</td>
+      <td>3.666667</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+
+Pada Tabel 10 dapat dilihat bahwa data _user_ sudah di-_transform_ dengan menggabungkan data _preferences user_ ke dalam data _user_. Sehingga data ini berisi _preferences user_ terhadap setiap _genre_ ke setiap film yang pernah diberikan rating oleh _user_.
+
+#### Data Item (Data Movie)
+
+Untuk proses tranformasi data _item_ hanya dilakukan dengan cara membuang kolom-kolom yang tidak diperlukan. Berikut merupakan hasilnya.
+
+Tabel 11. Sampel Data _Item_ yang Telah di-_Transform_
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>movieId</th>
+      <th>Adventure</th>
+      <th>Animation</th>
+      <th>Children</th>
+      <th>Comedy</th>
+      <th>Fantasy</th>
+      <th>Romance</th>
+      <th>Action</th>
+      <th>Crime</th>
+      <th>Thriller</th>
+      <th>Mystery</th>
+      <th>Horror</th>
+      <th>Drama</th>
+      <th>War</th>
+      <th>Western</th>
+      <th>Sci-Fi</th>
+      <th>Musical</th>
+      <th>Film-Noir</th>
+      <th>IMAX</th>
+      <th>Documentary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>6</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>47</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>50</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+Pada Tabel 11 dapat dilihat bahwa data _item_ sudah di-_transform_ dengan menghilangkan kolom-kolom yang tidak diperlukan. Jika suatu _genre_ film memiliki nilai 1, maka film tersebut memiliki _genre_ tersebut. Sebaliknya, jika suatu _genre_ film memiliki nilai 0, maka film tersebut tidak memiliki _genre_ tersebut.
+
+#### Data Rating
+
+Sedangkan untuk data rating hanya diambil dari kolom `rating` saja. Data rating ini akan dijadikan sebagai _target_.
+
+### Scalling Data
+
+Tabel 12. Sampel Data _User_ yang Telah di-_Scalling_
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>Adventure</th>
+      <th>Animation</th>
+      <th>Children</th>
+      <th>Comedy</th>
+      <th>Fantasy</th>
+      <th>Romance</th>
+      <th>Action</th>
+      <th>Crime</th>
+      <th>Thriller</th>
+      <th>Mystery</th>
+      <th>Horror</th>
+      <th>Drama</th>
+      <th>War</th>
+      <th>Western</th>
+      <th>Sci-Fi</th>
+      <th>Musical</th>
+      <th>Film-Noir</th>
+      <th>IMAX</th>
+      <th>Documentary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1.854035</td>
+      <td>1.351371</td>
+      <td>1.524218</td>
+      <td>1.72754</td>
+      <td>1.425833</td>
+      <td>1.530181</td>
+      <td>1.802559</td>
+      <td>1.408636</td>
+      <td>1.321439</td>
+      <td>0.934757</td>
+      <td>0.331341</td>
+      <td>1.937017</td>
+      <td>1.082297</td>
+      <td>0.877787</td>
+      <td>1.542293</td>
+      <td>1.340258</td>
+      <td>1.221822</td>
+      <td>-2.452027</td>
+      <td>-1.422555</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>1.854035</td>
+      <td>1.351371</td>
+      <td>1.524218</td>
+      <td>1.72754</td>
+      <td>1.425833</td>
+      <td>1.530181</td>
+      <td>1.802559</td>
+      <td>1.408636</td>
+      <td>1.321439</td>
+      <td>0.934757</td>
+      <td>0.331341</td>
+      <td>1.937017</td>
+      <td>1.082297</td>
+      <td>0.877787</td>
+      <td>1.542293</td>
+      <td>1.340258</td>
+      <td>1.221822</td>
+      <td>-2.452027</td>
+      <td>-1.422555</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>1.854035</td>
+      <td>1.351371</td>
+      <td>1.524218</td>
+      <td>1.72754</td>
+      <td>1.425833</td>
+      <td>1.530181</td>
+      <td>1.802559</td>
+      <td>1.408636</td>
+      <td>1.321439</td>
+      <td>0.934757</td>
+      <td>0.331341</td>
+      <td>1.937017</td>
+      <td>1.082297</td>
+      <td>0.877787</td>
+      <td>1.542293</td>
+      <td>1.340258</td>
+      <td>1.221822</td>
+      <td>-2.452027</td>
+      <td>-1.422555</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>1.854035</td>
+      <td>1.351371</td>
+      <td>1.524218</td>
+      <td>1.72754</td>
+      <td>1.425833</td>
+      <td>1.530181</td>
+      <td>1.802559</td>
+      <td>1.408636</td>
+      <td>1.321439</td>
+      <td>0.934757</td>
+      <td>0.331341</td>
+      <td>1.937017</td>
+      <td>1.082297</td>
+      <td>0.877787</td>
+      <td>1.542293</td>
+      <td>1.340258</td>
+      <td>1.221822</td>
+      <td>-2.452027</td>
+      <td>-1.422555</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>1.854035</td>
+      <td>1.351371</td>
+      <td>1.524218</td>
+      <td>1.72754</td>
+      <td>1.425833</td>
+      <td>1.530181</td>
+      <td>1.802559</td>
+      <td>1.408636</td>
+      <td>1.321439</td>
+      <td>0.934757</td>
+      <td>0.331341</td>
+      <td>1.937017</td>
+      <td>1.082297</td>
+      <td>0.877787</td>
+      <td>1.542293</td>
+      <td>1.340258</td>
+      <td>1.221822</td>
+      <td>-2.452027</td>
+      <td>-1.422555</td>
+    </tr>
+  </tbody>
+</table>
+
+Setelah melakukan _transformasi_, data _user_ dan data _item_ akan di _scalling_ dengan menggunakan _Standard Scaler_. Alasan _Standard Scaler_ digunakan yaitu karena akan dilakukan pembagian rentang rating, jika _value_ genre bernilai positif menandakan user menyukai film tersebut, sedangkan jika _value_ genre bernilai negatif menandakan user tidak menyukai film tersebut. Atau jika pada data item, _value_ genre bernilai positif menandakan film tersebut memiliki genre tersebut, sedangkan jika _value_ genre bernilai negatif menandakan film tersebut tidak memiliki genre tersebut. Sedangkan untuk data rating akan di _scalling_ dengan menggunakan _MinMax Scaler_ agar rating yang diberikan oleh _user_ memiliki rentang nilai antara 0 sampai 1.
+
+### Data Splitting
+
+ Selanjutnya, data _user_, data _item_, dan data rating akan di _split_ menjadi data _train_, data _test_, dan data _validation_. Hal ini bertujuan agar dapat dilakukan evaluasi model machine learning yang akan dibuat. Perbandingan data _train_, data _test_, dan data _validation_ yang digunakan adalah 80% data _train_, 10% data _test_, dan 10% data _validation_. 
 
 ## Modeling
 
